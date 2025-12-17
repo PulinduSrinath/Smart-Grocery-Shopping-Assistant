@@ -1,5 +1,7 @@
 import { GroceryItem, PurchaseHistory } from '@/types';
 import { EXPIRY_PERIODS } from '@/lib/rules';
+
+// Use SQLite database (reliable, no external server needed)
 import {
   getAllGroceryItems,
   addGroceryItem as dbAddGroceryItem,

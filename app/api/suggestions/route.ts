@@ -10,26 +10,33 @@ import {
 initializeSampleData();
 
 export async function GET() {
-  const groceryList = getGroceryList();
-  const purchaseHistory = getPurchaseHistory();
+  try {
+    const groceryList = getGroceryList();
+    const purchaseHistory = getPurchaseHistory();
 
-  const missingItems = predictMissingItems(groceryList, purchaseHistory);
-  const healthierAlternatives = suggestHealthierAlternatives(groceryList);
-  const expiringItems = checkExpiringItems(groceryList, purchaseHistory);
+    const missingItems = predictMissingItems(groceryList, purchaseHistory);
+    const healthierAlternatives = suggestHealthierAlternatives(groceryList);
+    const expiringItems = checkExpiringItems(groceryList, purchaseHistory);
 
-  const allSuggestions = [
-    ...missingItems,
-    ...healthierAlternatives,
-    ...expiringItems
-  ];
+    const allSuggestions = [
+      ...missingItems,
+      ...healthierAlternatives,
+      ...expiringItems
+    ];
 
-  return NextResponse.json({ 
-    suggestions: allSuggestions,
-    counts: {
-      missing: missingItems.length,
-      healthier: healthierAlternatives.length,
-      expiring: expiringItems.length
-    }
-  });
+    return NextResponse.json({ 
+      suggestions: allSuggestions,
+      counts: {
+        missing: missingItems.length,
+        healthier: healthierAlternatives.length,
+        expiring: expiringItems.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching suggestions:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch suggestions' },
+      { status: 500 }
+    );
+  }
 }
-

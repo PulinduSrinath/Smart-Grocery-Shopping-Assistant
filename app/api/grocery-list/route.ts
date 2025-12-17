@@ -4,7 +4,6 @@ import {
   addGroceryItem, 
   removeGroceryItem, 
   updateGroceryItem,
-  markAsPurchased,
   initializeSampleData 
 } from '@/lib/storage';
 import { GroceryItem } from '@/types';
