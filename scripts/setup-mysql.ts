@@ -20,7 +20,7 @@ import {
   initializeSampleData, 
   initializeShopData,
   closeDatabase 
-} from '../lib/mysql-database';
+} from '../src/lib/mysql-database';
 
 async function setup() {
   console.log('🚀 Starting MySQL database setup...\n');
@@ -49,7 +49,7 @@ async function setup() {
     console.error('\n❌ Database setup failed:', error);
     console.log('\n💡 Troubleshooting tips:');
     console.log('   1. Make sure MySQL server is running');
-    console.log('   2. Check your database credentials in lib/db-config.ts');
+    console.log('   2. Check your database credentials in src/lib/db-config.ts');
     console.log('   3. Create the database: CREATE DATABASE grocery_shop;');
     console.log('   4. Grant necessary permissions to your MySQL user');
     process.exit(1);

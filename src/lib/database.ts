@@ -25,7 +25,7 @@ export interface ShopCategoryDB {
 }
 
 // Database file path
-const dbPath = path.join(process.cwd(), 'data', 'grocery.db');
+const dbPath = path.join(process.cwd(), 'src', 'data', 'grocery.db');
 const dbDir = path.dirname(dbPath);
 
 // Ensure data directory exists

@@ -4,6 +4,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Smart Grocery Shopping Assistant',
   description: 'AI-powered grocery list manager with smart suggestions',
+  icons: {
+    icon: [],
+  },
 }
 
 export default function RootLayout({
