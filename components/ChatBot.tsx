@@ -20,13 +20,13 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! 👋 I'm your AI-powered Grocery Shopping Assistant. I can help you:\n\n🛒 Add items to your list\n💡 Suggest items you might need\n🥗 Recommend healthier alternatives\n⏰ Track expiring products\n\nJust chat naturally with me! Try saying \"add milk\" or \"what should I buy?\"",
+      text: "Hello! 👋 I'm your Smart Grocery Assistant. I can help you:\n\n🛒 Add items to your list\n💡 Suggest items you might need\n🥗 Recommend healthier alternatives\n⏰ Track expiring products\n\nTry saying \"add milk\" or \"suggest items\"!",
       sender: 'bot',
       timestamp: new Date(),
     }
   ]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,8 +37,136 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const detectCategory = (itemName: string): string => {
+    const name = itemName.toLowerCase();
+    if (name.includes('milk') || name.includes('cheese') || name.includes('yogurt') || name.includes('butter') || name.includes('curd') || name.includes('eggs') || name.includes('egg')) return 'dairy';
+    if (name.includes('chicken') || name.includes('beef') || name.includes('pork') || name.includes('fish') || name.includes('meat') || name.includes('prawns')) return 'meat';
+    if (name.includes('apple') || name.includes('banana') || name.includes('orange') || name.includes('mango') || name.includes('grape') || name.includes('fruit')) return 'fruits';
+    if (name.includes('carrot') || name.includes('tomato') || name.includes('onion') || name.includes('potato') || name.includes('vegetable') || name.includes('cabbage') || name.includes('spinach')) return 'vegetables';
+    if (name.includes('bread') || name.includes('roti') || name.includes('naan') || name.includes('bun')) return 'bread';
+    if (name.includes('water') || name.includes('juice') || name.includes('soda') || name.includes('tea') || name.includes('coffee') || name.includes('drink')) return 'beverages';
+    if (name.includes('chip') || name.includes('biscuit') || name.includes('cookie') || name.includes('snack') || name.includes('chocolate')) return 'snacks';
+    return 'other';
+  };
+
+  const healthierAlternatives: Record<string, { alternative: string; reason: string }> = {
+    'white bread': { alternative: 'brown bread or whole grain bread', reason: 'More fiber and nutrients' },
+    'bread': { alternative: 'brown bread or whole grain bread', reason: 'More fiber and nutrients' },
+    'white rice': { alternative: 'red rice or brown rice', reason: 'Lower glycemic index, more fiber' },
+    'rice': { alternative: 'red rice or brown rice', reason: 'Lower glycemic index, more fiber' },
+    'soda': { alternative: 'fresh fruit juice or coconut water', reason: 'No added sugar, natural vitamins' },
+    'cola': { alternative: 'sparkling water or lime juice', reason: 'No caffeine, no sugar' },
+    'sugar': { alternative: 'honey or jaggery', reason: 'Natural sweeteners with minerals' },
+    'butter': { alternative: 'coconut oil or olive oil', reason: 'Healthier fats' },
+    'chips': { alternative: 'roasted nuts or popcorn', reason: 'More protein, less oil' },
+    'ice cream': { alternative: 'frozen yogurt or fruit sorbet', reason: 'Less fat, probiotics' },
+    'milk': { alternative: 'low-fat milk or almond milk', reason: 'Less saturated fat' },
+  };
+
+  const generateResponse = (userInput: string): { text: string; action?: () => void } => {
+    const lowerInput = userInput.toLowerCase().trim();
+
+    // Add item commands
+    if (lowerInput.includes('add') || lowerInput.includes('buy') || lowerInput.includes('get') || lowerInput.includes('need')) {
+      // Parse quantity: "add 2kg rice" or "add 2 kg rice" or "add rice 2kg"
+      const quantityMatch = userInput.match(/(\d+(?:\.\d+)?)\s*(kg|g|L|ml|pcs|pack|bunch|bottle|box|loaf)?/i);
+      const quantity = quantityMatch ? parseFloat(quantityMatch[1]) : 1;
+      const unit = quantityMatch?.[2]?.toLowerCase() || 'pcs';
+
+      // Extract item name
+      let itemName = userInput
+        .replace(/^(add|buy|get|i need|please add|can you add)\s+/i, '')
+        .replace(/(\d+(?:\.\d+)?)\s*(kg|g|L|ml|pcs|pack|bunch|bottle|box|loaf)?\s*/gi, '')
+        .replace(/\s+to\s+(my\s+)?list.*$/i, '')
+        .replace(/\s+please.*$/i, '')
+        .trim();
+
+      if (itemName.length > 0) {
+        const category = detectCategory(itemName);
+        
+        // Check for healthier alternatives
+        let healthTip = '';
+        for (const [key, value] of Object.entries(healthierAlternatives)) {
+          if (itemName.toLowerCase().includes(key)) {
+            healthTip = `\n\n💡 Healthy tip: Consider ${value.alternative} instead - ${value.reason}!`;
+            break;
+          }
+        }
+
+        return {
+          text: `✅ Added "${itemName}" (${quantity} ${unit}) to your list!\n\nCategory: ${category}${healthTip}`,
+          action: () => {
+            if (onAddItem) {
+              onAddItem(itemName, category, quantity, unit);
+            }
+          }
+        };
+      }
+    }
+
+    // Healthier alternatives
+    if (lowerInput.includes('health') || lowerInput.includes('alternative') || lowerInput.includes('better option')) {
+      const alternatives = Object.entries(healthierAlternatives)
+        .slice(0, 5)
+        .map(([item, alt]) => `• ${item} → ${alt.alternative}`)
+        .join('\n');
+      
+      return {
+        text: `🥗 Here are some healthier alternatives:\n\n${alternatives}\n\nAsk me about any specific item for more suggestions!`
+      };
+    }
+
+    // Suggestions
+    if (lowerInput.includes('suggest') || lowerInput.includes('recommend') || lowerInput.includes('what should')) {
+      if (onGetSuggestions) onGetSuggestions();
+      return {
+        text: `💡 Based on common shopping patterns, you might need:\n\n🥛 Dairy: Milk, Eggs, Butter\n🍞 Bread: Bread, Roti\n🥬 Vegetables: Onions, Tomatoes, Potatoes\n🍎 Fruits: Bananas, Apples\n🌾 Staples: Rice, Dhal, Oil\n\nYou have ${currentListCount} items in your list. Would you like me to add any of these?`
+      };
+    }
+
+    // Expiring items
+    if (lowerInput.includes('expir') || lowerInput.includes('spoil') || lowerInput.includes('fresh')) {
+      return {
+        text: `⏰ Typical shelf life for groceries:\n\n🥛 Milk: 5-7 days\n🍞 Bread: 5-7 days\n🥬 Vegetables: 3-7 days\n🍎 Fruits: 5-10 days\n🥩 Meat: 2-3 days (refrigerated)\n🥚 Eggs: 3-4 weeks\n\nI'll remind you when items might be expiring!`
+      };
+    }
+
+    // Help
+    if (lowerInput.includes('help') || lowerInput.includes('what can you do') || lowerInput === '?') {
+      return {
+        text: `🤖 I'm your Grocery Assistant! Here's what I can do:\n\n📝 **Add Items:**\n• "add milk"\n• "add 2kg rice"\n• "buy eggs"\n\n💡 **Get Suggestions:**\n• "suggest items"\n• "what should I buy?"\n\n🥗 **Healthy Options:**\n• "healthier alternatives"\n• "better option for bread"\n\n⏰ **Expiry Info:**\n• "when does milk expire?"\n\nJust chat naturally with me!`
+      };
+    }
+
+    // Greetings
+    if (lowerInput.match(/^(hi|hello|hey|good morning|good evening)/)) {
+      return {
+        text: `Hello! 👋 Great to see you! You have ${currentListCount} items in your list.\n\nHow can I help you today? You can:\n• Add items: "add milk"\n• Get suggestions: "suggest items"\n• Ask for healthy options`
+      };
+    }
+
+    // Thank you
+    if (lowerInput.includes('thank') || lowerInput.includes('thanks')) {
+      return {
+        text: `You're welcome! 😊 Happy to help with your grocery shopping. Let me know if you need anything else!`
+      };
+    }
+
+    // Clear/Remove
+    if (lowerInput.includes('clear') || lowerInput.includes('remove all') || lowerInput.includes('delete all')) {
+      return {
+        text: `⚠️ To manage your list, please use the grocery list above where you can:\n• ✏️ Edit individual items\n• 🗑️ Delete items\n• ✓ Mark as purchased`
+      };
+    }
+
+    // Default response
+    return {
+      text: `I understand you said: "${userInput}"\n\nI can help you with:\n• Adding items: "add [item]"\n• Suggestions: "suggest items"\n• Healthy options: "healthier alternatives"\n\nOr type "help" for more options!`
+    };
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -50,47 +178,26 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
     setMessages(prev => [...prev, userMessage]);
     const userInput = input;
     setInput('');
-    setIsLoading(true);
+    setIsTyping(true);
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userInput,
-          conversationHistory: messages.slice(-10) // Send last 10 messages for context
-        })
-      });
+    // Simulate thinking time
+    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
 
-      const data = await response.json();
+    const response = generateResponse(userInput);
+    
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: response.text,
+      sender: 'bot',
+      timestamp: new Date()
+    };
 
-      // Handle the action if item was added
-      if (data.action?.success && data.action?.action === 'add_item') {
-        // Refresh the list
-        if (onGetSuggestions) {
-          onGetSuggestions();
-        }
-      }
+    setIsTyping(false);
+    setMessages(prev => [...prev, botMessage]);
 
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: data.response || "I'm sorry, I couldn't process that. Please try again.",
-        sender: 'bot',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
-      console.error('Chat error:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I'm having trouble connecting right now. Please try again in a moment. 🔄",
-        sender: 'bot',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+    // Execute action if any
+    if (response.action) {
+      setTimeout(() => response.action!(), 300);
     }
   };
 
@@ -102,15 +209,11 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
   };
 
   const quickActions = [
-    { label: "📝 Add milk", action: "add milk" },
+    { label: "🥛 Add milk", action: "add milk" },
     { label: "🍞 Add bread", action: "add bread" },
-    { label: "💡 Suggestions", action: "what items should I buy based on my history?" },
-    { label: "🥗 Healthy options", action: "suggest healthier alternatives for common items" },
+    { label: "💡 Suggestions", action: "suggest items" },
+    { label: "🥗 Healthy options", action: "healthier alternatives" },
   ];
-
-  const handleQuickAction = (action: string) => {
-    setInput(action);
-  };
 
   return (
     <>
@@ -130,9 +233,6 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         )}
-        {!isOpen && messages.length > 1 && (
-          <span className="chat-badge">{messages.length - 1}</span>
-        )}
       </button>
 
       {/* Chat Window */}
@@ -146,8 +246,8 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
                 </svg>
               </div>
               <div>
-                <h3>AI Grocery Assistant</h3>
-                <p>Powered by GPT • {currentListCount} items in list</p>
+                <h3>Grocery Assistant</h3>
+                <p>{currentListCount} items in your list</p>
               </div>
             </div>
           </div>
@@ -166,7 +266,7 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
                 </div>
               </div>
             ))}
-            {isLoading && (
+            {isTyping && (
               <div className="chat-message bot-message">
                 <div className="message-content">
                   <div className="typing-indicator">
@@ -185,7 +285,7 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
             {quickActions.map((qa, index) => (
               <button
                 key={index}
-                onClick={() => handleQuickAction(qa.action)}
+                onClick={() => setInput(qa.action)}
                 className="quick-action-chip"
               >
                 {qa.label}
@@ -199,23 +299,18 @@ export default function ChatBot({ onAddItem, onGetSuggestions, currentListCount 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask me anything about groceries..."
+              placeholder="Type a message... (e.g., 'add milk')"
               className="chat-input"
-              disabled={isLoading}
             />
             <button 
               onClick={handleSend} 
               className="chat-send-button" 
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim()}
             >
-              {isLoading ? (
-                <div className="send-loading"></div>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="22" y1="2" x2="11" y2="13"></line>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-              )}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </button>
           </div>
         </div>
