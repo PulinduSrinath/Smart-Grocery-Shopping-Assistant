@@ -10,8 +10,8 @@ export const HEALTHIER_ALTERNATIVES: Record<string, HealthierAlternative> = {
   },
   'white rice': {
     original: 'white rice',
-    alternative: 'red rice (rathu kekulu) or samba rice',
-    reason: 'Red rice and samba rice have more fiber, nutrients, and lower glycemic index'
+    alternative: 'red rice (rathu kekulu)',
+    reason: 'Red rice have more fiber, nutrients, and lower glycemic index'
   },
   'soda': {
     original: 'soda',
@@ -128,7 +128,7 @@ export const HEALTHIER_ALTERNATIVES: Record<string, HealthierAlternative> = {
 
 // Sri Lankan cultural food suggestions
 export const SRI_LANKAN_ESSENTIALS = [
-  { name: 'rice', category: 'other', frequency: 7, description: 'Staple food - consider red rice or samba rice' },
+  { name: 'rice', category: 'other', frequency: 7, description: 'Staple food - consider red rice' },
   { name: 'coconut', category: 'other', frequency: 5, description: 'Essential for curries and sambols' },
   { name: 'curry leaves', category: 'vegetables', frequency: 7, description: 'Aromatic leaves for curries' },
   { name: 'pandan leaves', category: 'vegetables', frequency: 7, description: 'Rampe - for flavoring rice and curries' },

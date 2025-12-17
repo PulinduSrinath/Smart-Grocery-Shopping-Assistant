@@ -97,6 +97,31 @@ export default function AboutPage() {
           </ol>
         </div>
 
+        <div className="section" id="crud-guide">
+          <h2 className="section-title">📊 CRUD Operations Guide</h2>
+          <p style={{ color: '#64748b', marginBottom: '20px' }}>
+            Our application provides complete CRUD (Create, Read, Update, Delete) functionality for managing your grocery list.
+          </p>
+          <div className="crud-guide">
+            <div className="crud-item">
+              <h3>➕ CREATE</h3>
+              <p>Add new items to your grocery list using the form above or chat with the assistant. All items are validated before being added.</p>
+            </div>
+            <div className="crud-item">
+              <h3>📖 READ</h3>
+              <p>View all your grocery items in the list. Items show category, purchase date, and expiry information. You can also fetch individual items by ID.</p>
+            </div>
+            <div className="crud-item">
+              <h3>✏️ UPDATE</h3>
+              <p>Click the "Edit" button on any item to modify its name, category, or dates. Changes are validated and saved immediately.</p>
+            </div>
+            <div className="crud-item">
+              <h3>🗑️ DELETE</h3>
+              <p>Click the "Delete" button to remove items from your list. You'll be asked to confirm before deletion to prevent accidents.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="section" style={{ textAlign: 'center', padding: '40px 0' }}>
           <Link href="/" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
             ← Back to Home
