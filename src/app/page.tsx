@@ -4,15 +4,8 @@ import { useState, useEffect } from 'react';
 import { GroceryItem } from '@/types';
 import ChatBot from '@/components/ChatBot';
 import EditItemModal from '@/components/EditItemModal';
-import Notification from '@/components/Notification';
 import AssistantPopup, { AssistantMessage, generateAssistantMessage } from '@/components/AssistantPopup';
 import ShopCatalog from '@/components/ShopCatalog';
-
-interface NotificationState {
-  message: string;
-  type: 'success' | 'error' | 'info';
-  isVisible: boolean;
-}
 
 export default function Home() {
   const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
@@ -24,11 +17,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [notification, setNotification] = useState<NotificationState>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  });
   const [assistantPopup, setAssistantPopup] = useState<{
     message: AssistantMessage | null;
     isVisible: boolean;
@@ -43,13 +31,6 @@ export default function Home() {
     loadData();
   }, []);
 
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setNotification({ message, type, isVisible: true });
-  };
-
-  const hideNotification = () => {
-    setNotification(prev => ({ ...prev, isVisible: false }));
-  };
 
   const showAssistantPopup = (itemName: string, category: string) => {
     const existingItems = groceryList.map(item => item.name);
@@ -92,7 +73,7 @@ export default function Home() {
       updateStats(listData.list || []);
     } catch (error) {
       console.error('Error loading data:', error);
-      showNotification('Failed to load grocery list', 'error');
+      console.error('Failed to load grocery list');
     } finally {
       setLoading(false);
     }
@@ -114,7 +95,7 @@ export default function Home() {
     const itemUnit = unit || newItem.unit;
     
     if (!itemName.trim()) {
-      showNotification('Item name is required', 'error');
+      alert('Item name is required');
       return;
     }
 
@@ -153,12 +134,12 @@ export default function Home() {
           };
           setAssistantPopup({ message: duplicateMessage, isVisible: true });
         } else {
-          showNotification(errorData.error || 'Failed to add item', 'error');
+          console.error(errorData.error || 'Failed to add item');
         }
       }
     } catch (error) {
       console.error('Error adding item:', error);
-      showNotification('Failed to add item. Please try again.', 'error');
+      console.error('Failed to add item. Please try again.');
     }
   };
 
@@ -181,11 +162,10 @@ export default function Home() {
         setGroceryList(groceryList.map(item => 
           item.id === id ? data.item : item
         ));
-        showNotification('Item updated successfully!', 'success');
         loadData();
       } else {
         const errorData = await res.json();
-        showNotification(errorData.error || 'Failed to update item', 'error');
+        console.error(errorData.error || 'Failed to update item');
         throw new Error(errorData.error);
       }
     } catch (error) {
@@ -210,15 +190,14 @@ export default function Home() {
 
       if (res.ok) {
         setGroceryList(groceryList.filter(item => item.id !== id));
-        showNotification(`"${item.name}" deleted successfully`, 'success');
         loadData();
       } else {
         const errorData = await res.json();
-        showNotification(errorData.error || 'Failed to delete item', 'error');
+        console.error(errorData.error || 'Failed to delete item');
       }
     } catch (error) {
       console.error('Error removing item:', error);
-      showNotification('Failed to delete item. Please try again.', 'error');
+      console.error('Failed to delete item. Please try again.');
     }
   };
 
@@ -232,14 +211,13 @@ export default function Home() {
 
       if (res.ok) {
         const item = getItem(id);
-        showNotification(`"${item?.name || 'Item'}" marked as purchased!`, 'success');
         loadData();
       } else {
-        showNotification('Failed to mark item as purchased', 'error');
+        console.error('Failed to mark item as purchased');
       }
     } catch (error) {
       console.error('Error marking as purchased:', error);
-      showNotification('Failed to update item. Please try again.', 'error');
+      console.error('Failed to update item. Please try again.');
     }
   };
 
@@ -344,13 +322,6 @@ export default function Home() {
           </nav>
         </div>
       </header>
-
-      <Notification
-        message={notification.message}
-        type={notification.type}
-        isVisible={notification.isVisible}
-        onClose={hideNotification}
-      />
 
       <AssistantPopup
         message={assistantPopup.message}

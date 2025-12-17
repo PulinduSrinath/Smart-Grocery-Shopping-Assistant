@@ -4,14 +4,7 @@ import { useState, useEffect } from 'react';
 import { GroceryItem } from '@/types';
 import GroceryListDisplay from '@/components/GroceryListDisplay';
 import EditItemModal from '@/components/EditItemModal';
-import Notification from '@/components/Notification';
 import ChatBot from '@/components/ChatBot';
-
-interface NotificationState {
-  message: string;
-  type: 'success' | 'error' | 'info';
-  isVisible: boolean;
-}
 
 export default function ListPage() {
   const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
@@ -19,23 +12,10 @@ export default function ListPage() {
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [notification, setNotification] = useState<NotificationState>({
-    message: '',
-    type: 'success',
-    isVisible: false
-  });
 
   useEffect(() => {
     loadData();
   }, []);
-
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setNotification({ message, type, isVisible: true });
-  };
-
-  const hideNotification = () => {
-    setNotification(prev => ({ ...prev, isVisible: false }));
-  };
 
   const loadData = async () => {
     try {
@@ -45,7 +25,6 @@ export default function ListPage() {
       setGroceryList(data.list || []);
     } catch (error) {
       console.error('Error loading data:', error);
-      showNotification('Failed to load grocery list', 'error');
     } finally {
       setLoading(false);
     }
@@ -60,11 +39,10 @@ export default function ListPage() {
       });
 
       if (res.ok) {
-        showNotification('Item updated successfully!', 'success');
         loadData();
       } else {
         const errorData = await res.json();
-        showNotification(errorData.error || 'Failed to update item', 'error');
+        console.error(errorData.error || 'Failed to update item');
         throw new Error(errorData.error);
       }
     } catch (error) {
@@ -87,15 +65,13 @@ export default function ListPage() {
       });
 
       if (res.ok) {
-        showNotification(`"${item.name}" deleted successfully`, 'success');
         loadData();
       } else {
         const errorData = await res.json();
-        showNotification(errorData.error || 'Failed to delete item', 'error');
+        console.error(errorData.error || 'Failed to delete item');
       }
     } catch (error) {
       console.error('Error removing item:', error);
-      showNotification('Failed to delete item. Please try again.', 'error');
     }
   };
 
@@ -108,15 +84,12 @@ export default function ListPage() {
       });
 
       if (res.ok) {
-        const item = groceryList.find(i => i.id === id);
-        showNotification(`"${item?.name || 'Item'}" marked as purchased!`, 'success');
         loadData();
       } else {
-        showNotification('Failed to mark item as purchased', 'error');
+        console.error('Failed to mark item as purchased');
       }
     } catch (error) {
       console.error('Error marking as purchased:', error);
-      showNotification('Failed to update item. Please try again.', 'error');
     }
   };
 
@@ -181,13 +154,6 @@ export default function ListPage() {
           </nav>
         </div>
       </header>
-
-      <Notification
-        message={notification.message}
-        type={notification.type}
-        isVisible={notification.isVisible}
-        onClose={hideNotification}
-      />
 
       <div className="container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -254,14 +220,12 @@ export default function ListPage() {
             body: JSON.stringify({ name, category })
           });
           if (res.ok) {
-            showNotification(`"${name}" added successfully!`, 'success');
             loadData();
           }
         } catch (error) {
-          showNotification('Failed to add item', 'error');
+          console.error('Failed to add item', error);
         }
       }} onGetSuggestions={() => {}} />
     </>
   );
 }
-
