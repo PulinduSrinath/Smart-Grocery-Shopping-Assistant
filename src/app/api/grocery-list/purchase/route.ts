@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const item = markAsPurchased(id);
+    const item = await markAsPurchased(id);
     if (item) {
       return NextResponse.json({ item });
     } else {

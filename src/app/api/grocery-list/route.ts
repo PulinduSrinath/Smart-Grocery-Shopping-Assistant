@@ -8,8 +8,12 @@ import {
 } from '@/lib/storage';
 import { GroceryItem } from '@/types';
 
-// Initialize sample data on first load
-initializeSampleData();
+// Initialize sample data on first load (fire and forget)
+let initialized = false;
+if (!initialized) {
+  initializeSampleData().catch(console.error);
+  initialized = true;
+}
 
 // READ - Get all items
 export async function GET(request: NextRequest) {
@@ -19,7 +23,7 @@ export async function GET(request: NextRequest) {
     
     // If ID is provided, get single item
     if (id) {
-      const list = getGroceryList();
+      const list = await getGroceryList();
       const item = list.find(item => item.id === id);
       
       if (!item) {
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Otherwise, get all items
-    const list = getGroceryList();
+    const list = await getGroceryList();
     return NextResponse.json({ 
       list,
       count: list.length 
@@ -100,7 +104,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const newItem = addGroceryItem({
+    const newItem = await addGroceryItem({
       name: name.trim(),
       category: category.toLowerCase(),
       quantity: quantity ? parseFloat(quantity) : undefined,
@@ -136,7 +140,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const success = removeGroceryItem(id);
+    const success = await removeGroceryItem(id);
     if (success) {
       return NextResponse.json({ 
         success: true,
@@ -251,7 +255,7 @@ export async function PATCH(request: NextRequest) {
       updates.isPurchased = isPurchased;
     }
 
-    const updatedItem = updateGroceryItem(id, updates);
+    const updatedItem = await updateGroceryItem(id, updates);
     if (updatedItem) {
       return NextResponse.json({ 
         item: updatedItem,

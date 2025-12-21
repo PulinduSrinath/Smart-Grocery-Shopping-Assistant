@@ -1,7 +1,7 @@
 import { GroceryItem, PurchaseHistory } from '@/types';
 import { EXPIRY_PERIODS } from '@/lib/rules';
 
-// Use SQLite database (reliable, no external server needed)
+// Use MySQL database
 import {
   getAllGroceryItems,
   addGroceryItem as dbAddGroceryItem,
@@ -13,37 +13,38 @@ import {
 } from '@/lib/database';
 
 // Initialize database with sample data
-export function initializeSampleData() {
-  dbInitializeSampleData();
+export async function initializeSampleData() {
+  await dbInitializeSampleData();
 }
 
-export function getGroceryList(): GroceryItem[] {
-  return getAllGroceryItems();
+export async function getGroceryList(): Promise<GroceryItem[]> {
+  return await getAllGroceryItems();
 }
 
-export function addGroceryItem(item: Omit<GroceryItem, 'id'>): GroceryItem {
-  return dbAddGroceryItem(item);
+export async function addGroceryItem(item: Omit<GroceryItem, 'id'>): Promise<GroceryItem> {
+  return await dbAddGroceryItem(item);
 }
 
-export function removeGroceryItem(id: string): boolean {
-  return dbRemoveGroceryItem(id);
+export async function removeGroceryItem(id: string): Promise<boolean> {
+  return await dbRemoveGroceryItem(id);
 }
 
-export function updateGroceryItem(id: string, updates: Partial<GroceryItem>): GroceryItem | null {
-  return dbUpdateGroceryItem(id, updates);
+export async function updateGroceryItem(id: string, updates: Partial<GroceryItem>): Promise<GroceryItem | null> {
+  return await dbUpdateGroceryItem(id, updates);
 }
 
-export function markAsPurchased(id: string): GroceryItem | null {
-  const item = getAllGroceryItems().find(i => i.id === id);
+export async function markAsPurchased(id: string): Promise<GroceryItem | null> {
+  const items = await getAllGroceryItems();
+  const item = items.find(i => i.id === id);
   if (item) {
-    const updated = dbUpdateGroceryItem(id, {
+    const updated = await dbUpdateGroceryItem(id, {
       isPurchased: true,
       purchasedDate: new Date()
     });
     
     if (updated) {
-      // Update purchase history
-      addOrUpdatePurchaseHistory({
+      // Update purchase history with proper date
+      await addOrUpdatePurchaseHistory({
         itemName: item.name,
         lastPurchased: new Date(),
         frequency: EXPIRY_PERIODS[item.category.toLowerCase()] || 7,
@@ -56,6 +57,6 @@ export function markAsPurchased(id: string): GroceryItem | null {
   return null;
 }
 
-export function getPurchaseHistory(): PurchaseHistory[] {
-  return getAllPurchaseHistory();
+export async function getPurchaseHistory(): Promise<PurchaseHistory[]> {
+  return await getAllPurchaseHistory();
 }

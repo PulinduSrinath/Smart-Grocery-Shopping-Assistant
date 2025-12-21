@@ -14,9 +14,9 @@ import {
 // Initialize shop data on first request
 let initialized = false;
 
-function ensureInitialized() {
+async function ensureInitialized() {
   if (!initialized) {
-    initializeShopData();
+    await initializeShopData();
     initialized = true;
   }
 }
@@ -24,7 +24,7 @@ function ensureInitialized() {
 // GET - Fetch shop items with optional filters
 export async function GET(request: NextRequest) {
   try {
-    ensureInitialized();
+    await ensureInitialized();
     
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -35,18 +35,18 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       // Search by name
-      items = searchShopItemsDB(search);
+      items = await searchShopItemsDB(search);
     } else if (category && category !== 'all') {
       // Filter by category
-      items = getShopItemsByCategory(category);
+      items = await getShopItemsByCategory(category);
     } else {
       // Get all items
-      items = getAllShopItems();
+      items = await getAllShopItems();
     }
 
     // Include categories if requested
     if (includeCategories) {
-      const categoriesWithCounts = getCategoriesWithItemCounts();
+      const categoriesWithCounts = await getCategoriesWithItemCounts();
       return NextResponse.json({
         items,
         categories: categoriesWithCounts
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 // POST - Add a new shop item
 export async function POST(request: NextRequest) {
   try {
-    ensureInitialized();
+    await ensureInitialized();
     
     const body = await request.json();
     const { name, category, defaultUnit, image, price, inStock = true } = body;
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const id = `shop-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newItem = addShopItem({
+    const newItem = await addShopItem({
       id,
       name,
       category,
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 // PUT - Update a shop item
 export async function PUT(request: NextRequest) {
   try {
-    ensureInitialized();
+    await ensureInitialized();
     
     const body = await request.json();
     const { id, ...updates } = body;
@@ -114,7 +114,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updatedItem = updateShopItem(id, updates);
+    const updatedItem = await updateShopItem(id, updates);
 
     if (!updatedItem) {
       return NextResponse.json(
@@ -136,7 +136,7 @@ export async function PUT(request: NextRequest) {
 // DELETE - Remove a shop item
 export async function DELETE(request: NextRequest) {
   try {
-    ensureInitialized();
+    await ensureInitialized();
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -148,7 +148,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const deleted = deleteShopItem(id);
+    const deleted = await deleteShopItem(id);
 
     if (!deleted) {
       return NextResponse.json(

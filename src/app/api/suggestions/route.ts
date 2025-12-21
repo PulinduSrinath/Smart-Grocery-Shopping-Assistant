@@ -6,13 +6,17 @@ import {
   checkExpiringItems 
 } from '@/lib/rules';
 
-// Initialize sample data
-initializeSampleData();
+// Initialize sample data (fire and forget)
+let initialized = false;
+if (!initialized) {
+  initializeSampleData().catch(console.error);
+  initialized = true;
+}
 
 export async function GET() {
   try {
-    const groceryList = getGroceryList();
-    const purchaseHistory = getPurchaseHistory();
+    const groceryList = await getGroceryList();
+    const purchaseHistory = await getPurchaseHistory();
 
     const missingItems = predictMissingItems(groceryList, purchaseHistory);
     const healthierAlternatives = suggestHealthierAlternatives(groceryList);

@@ -31,7 +31,6 @@ export default function Home() {
     loadData();
   }, []);
 
-
   const showAssistantPopup = (itemName: string, category: string) => {
     const existingItems = groceryList.map(item => item.name);
     const message = generateAssistantMessage('added', itemName, existingItems, category);
@@ -162,6 +161,7 @@ export default function Home() {
         setGroceryList(groceryList.map(item => 
           item.id === id ? data.item : item
         ));
+        // Item updated successfully
         loadData();
       } else {
         const errorData = await res.json();
@@ -190,6 +190,7 @@ export default function Home() {
 
       if (res.ok) {
         setGroceryList(groceryList.filter(item => item.id !== id));
+        // Item deleted successfully
         loadData();
       } else {
         const errorData = await res.json();
@@ -211,6 +212,7 @@ export default function Home() {
 
       if (res.ok) {
         const item = getItem(id);
+        // Item marked as purchased
         loadData();
       } else {
         console.error('Failed to mark item as purchased');
