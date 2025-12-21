@@ -6,13 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:setup": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/setup-mysql.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.5.0",
-    "mysql2": "^3.16.0",
     "next": "^14.0.0",
     "openai": "^6.14.0",
     "react": "^18.2.0",
