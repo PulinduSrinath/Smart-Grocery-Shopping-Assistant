@@ -1572,80 +1572,6 @@ h1 {
   }
 }
 
-/* Collapsible Section Styles */
-.collapsible-section {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-
-.collapsible-header {
-  width: 100%;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s;
-  text-align: left;
-}
-
-.collapsible-header:hover {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-}
-
-.collapsible-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #1e3a8a;
-  display: flex;
-  align-items: center;
-}
-
-.collapsible-icon {
-  transition: transform 0.3s;
-  color: #64748b;
-  flex-shrink: 0;
-}
-
-.collapsible-icon.open {
-  transform: rotate(180deg);
-}
-
-.collapsible-content {
-  padding: 24px;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Sri Lankan Suggestions Styles */
-.sri-lankan-suggestions-content {
-  padding: 0;
-}
-
-.sri-lankan-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
 .filter-control {
   display: flex;
   align-items: center;
@@ -1653,60 +1579,7 @@ h1 {
   gap: 10px;
 }
 
-.sri-lankan-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.sri-lankan-item {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
-  border: 2px solid #fbbf24;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.sri-lankan-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
-  border-color: #f59e0b;
-}
-
-.sri-lankan-content h4 {
-  margin: 0 0 8px 0;
-  color: #92400e;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.sri-lankan-content p {
-  margin: 0;
-  color: #78350f;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.sri-lankan-item .btn {
-  margin-top: 12px;
-  align-self: flex-start;
-}
-
 @media (max-width: 768px) {
-  .sri-lankan-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sri-lankan-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .filter-control {
     width: 100%;
     flex-direction: column;
@@ -1715,22 +1588,6 @@ h1 {
 
   .filter-control label {
     width: 100%;
-  }
-
-  .sri-lankan-controls .btn {
-    width: 100%;
-  }
-
-  .collapsible-header {
-    padding: 16px 20px;
-  }
-
-  .collapsible-title {
-    font-size: 1.1rem;
-  }
-
-  .collapsible-content {
-    padding: 20px;
   }
 }
 
