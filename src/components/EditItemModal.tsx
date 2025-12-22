@@ -13,16 +13,11 @@ interface EditItemModalProps {
 export default function EditItemModal({ item, isOpen, onClose, onSave }: EditItemModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    category: 'other',
     quantity: '',
-    unit: 'pcs',
-    purchasedDate: '',
-    expiryDate: ''
+    unit: 'pcs'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const categories = ['dairy', 'meat', 'vegetables', 'fruits', 'bread', 'beverages', 'snacks', 'other'];
 
   const units = ['pcs', 'kg', 'g', 'L', 'mL', 'pack', 'bunch', 'bottle', 'box'];
 
@@ -30,15 +25,8 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
     if (item && isOpen) {
       setFormData({
         name: item.name,
-        category: item.category,
         quantity: item.quantity?.toString() || '',
-        unit: item.unit || 'pcs',
-        purchasedDate: item.purchasedDate 
-          ? new Date(item.purchasedDate).toISOString().split('T')[0]
-          : '',
-        expiryDate: item.expiryDate 
-          ? new Date(item.expiryDate).toISOString().split('T')[0]
-          : ''
+        unit: item.unit || 'pcs'
       });
       setError('');
     }
@@ -58,8 +46,7 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
     setLoading(true);
     try {
       const updates: Partial<GroceryItem> = {
-        name: formData.name.trim(),
-        category: formData.category
+        name: formData.name.trim()
       };
 
       if (formData.quantity) {
@@ -68,14 +55,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
           updates.quantity = qty;
           updates.unit = formData.unit;
         }
-      }
-
-      if (formData.purchasedDate) {
-        updates.purchasedDate = new Date(formData.purchasedDate);
-      }
-
-      if (formData.expiryDate) {
-        updates.expiryDate = new Date(formData.expiryDate);
       }
 
       await onSave(item.id, updates);
@@ -122,22 +101,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="category">Category *</label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              required
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="form-group-row">
             <div className="form-group" style={{ flex: 1 }}>
               <label htmlFor="quantity">Quantity</label>
@@ -163,26 +126,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
                 ))}
               </select>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="purchasedDate">Purchased Date</label>
-            <input
-              type="date"
-              id="purchasedDate"
-              value={formData.purchasedDate}
-              onChange={(e) => setFormData({ ...formData, purchasedDate: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="expiryDate">Expiry Date</label>
-            <input
-              type="date"
-              id="expiryDate"
-              value={formData.expiryDate}
-              onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-            />
           </div>
 
           <div className="modal-actions">

@@ -1,7 +1,7 @@
 import { GroceryItem, PurchaseHistory } from '@/types';
 import { EXPIRY_PERIODS } from '@/lib/rules';
 
-// Use SQLite database (reliable, no external server needed)
+// Use MySQL database
 import {
   getAllGroceryItems,
   addGroceryItem as dbAddGroceryItem,
@@ -13,41 +13,100 @@ import {
 } from '@/lib/database';
 
 // Initialize database with sample data
-export function initializeSampleData() {
-  dbInitializeSampleData();
+export async function initializeSampleData() {
+  await dbInitializeSampleData();
 }
 
-export function getGroceryList(): GroceryItem[] {
-  return getAllGroceryItems();
+export async function getGroceryList(): Promise<GroceryItem[]> {
+  return await getAllGroceryItems();
 }
 
-export function addGroceryItem(item: Omit<GroceryItem, 'id'>): GroceryItem {
-  return dbAddGroceryItem(item);
+export async function addGroceryItem(item: Omit<GroceryItem, 'id'>): Promise<GroceryItem> {
+  return await dbAddGroceryItem(item);
 }
 
-export function removeGroceryItem(id: string): boolean {
-  return dbRemoveGroceryItem(id);
+export async function removeGroceryItem(id: string): Promise<boolean> {
+  return await dbRemoveGroceryItem(id);
 }
 
-export function updateGroceryItem(id: string, updates: Partial<GroceryItem>): GroceryItem | null {
-  return dbUpdateGroceryItem(id, updates);
+export async function updateGroceryItem(id: string, updates: Partial<GroceryItem>): Promise<GroceryItem | null> {
+  return await dbUpdateGroceryItem(id, updates);
 }
 
-export function markAsPurchased(id: string): GroceryItem | null {
-  const item = getAllGroceryItems().find(i => i.id === id);
+// Calculate expiry days based on item name
+function getExpiryDays(itemName: string, category?: string): number {
+  const nameLower = itemName.toLowerCase();
+  
+  // Item-specific expiry periods (in days)
+  const itemExpiryDays: Record<string, number> = {
+    'milk': 5,
+    'almond milk': 7,
+    'bread': 5,
+    'eggs': 21,
+    'meat': 3,
+    'chicken': 3,
+    'fish': 2,
+    'cheese': 14,
+    'yogurt': 14,
+    'rice': 365, // Uncooked rice - 1 year
+    'white rice': 365,
+    'brown rice': 180,
+    'red rice': 180,
+    'vegetables': 5,
+    'fruits': 7,
+    'tomato': 5,
+    'onion': 30,
+    'potato': 30,
+    'carrot': 14,
+    'lettuce': 5,
+    'spinach': 3,
+    'banana': 5,
+    'apple': 14,
+    'orange': 14,
+  };
+  
+  // Check for exact or partial match in item name
+  for (const [key, days] of Object.entries(itemExpiryDays)) {
+    if (nameLower.includes(key) || key.includes(nameLower)) {
+      return days;
+    }
+  }
+  
+  // Fallback to category-based expiry
+  if (category) {
+    return EXPIRY_PERIODS[category.toLowerCase()] || EXPIRY_PERIODS['other'];
+  }
+  
+  // Default expiry period
+  return EXPIRY_PERIODS['other'];
+}
+
+export async function markAsPurchased(id: string): Promise<GroceryItem | null> {
+  const items = await getAllGroceryItems();
+  const item = items.find(i => i.id === id);
   if (item) {
-    const updated = dbUpdateGroceryItem(id, {
+    const purchaseDate = new Date();
+    const expiryDays = getExpiryDays(item.name, item.category);
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setDate(expiryDate.getDate() + expiryDays);
+    
+    const updated = await dbUpdateGroceryItem(id, {
       isPurchased: true,
-      purchasedDate: new Date()
+      purchasedDate: purchaseDate,
+      expiryDate: expiryDate
     });
     
     if (updated) {
-      // Update purchase history
-      addOrUpdatePurchaseHistory({
+      // Update purchase history with quantity and unit
+      const quantity = item.quantity || 1;
+      const unit = item.unit || 'pcs';
+      
+      await addOrUpdatePurchaseHistory({
         itemName: item.name,
-        lastPurchased: new Date(),
-        frequency: EXPIRY_PERIODS[item.category.toLowerCase()] || 7,
-        category: item.category
+        lastPurchased: purchaseDate,
+        totalQuantity: quantity,
+        unit: unit,
+        category: item.category || 'other'
       });
     }
     
@@ -56,6 +115,6 @@ export function markAsPurchased(id: string): GroceryItem | null {
   return null;
 }
 
-export function getPurchaseHistory(): PurchaseHistory[] {
-  return getAllPurchaseHistory();
+export async function getPurchaseHistory(): Promise<PurchaseHistory[]> {
+  return await getAllPurchaseHistory();
 }

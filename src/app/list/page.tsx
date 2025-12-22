@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { GroceryItem } from '@/types';
 import GroceryListDisplay from '@/components/GroceryListDisplay';
 import EditItemModal from '@/components/EditItemModal';
-import ChatBot from '@/components/ChatBot';
+import Assistant from '@/components/Assistant';
 
 export default function ListPage() {
   const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -109,90 +109,111 @@ export default function ListPage() {
     setEditingItem(null);
   };
 
-  if (loading) {
-    return (
-      <>
-        <header className="header">
-          <div className="header-content">
-            <a href="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="logo-icon">🛒</div>
-              <span>Smart Grocery Assistant</span>
-            </a>
-            <nav>
-              <ul className="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/list" style={{ textDecoration: 'underline' }}>List</a></li>
-                <li><a href="/about">About</a></li>
-              </ul>
-            </nav>
-          </div>
-        </header>
-        <div className="container">
-          <div className="empty-state">
-            <div className="empty-state-icon">🛒</div>
-            <p>Loading your grocery list...</p>
-          </div>
-        </div>
-      </>
-    );
-  }
+  const handleRemoveItemByName = async (itemName: string) => {
+    const item = groceryList.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+    if (item) {
+      await removeItem(item.id);
+    } else {
+      const partialMatch = groceryList.find(i => 
+        i.name.toLowerCase().includes(itemName.toLowerCase()) || 
+        itemName.toLowerCase().includes(i.name.toLowerCase())
+      );
+      if (partialMatch) {
+        await removeItem(partialMatch.id);
+      }
+    }
+  };
+
+  const handleGetList = async () => {
+    try {
+      const res = await fetch('/api/grocery-list');
+      if (res.ok) {
+        const data = await res.json();
+        return (data.list || []).map((item: GroceryItem) => ({
+          name: item.name,
+          expiryDate: item.expiryDate,
+          isExpiring: item.isExpiring,
+          isPurchased: item.isPurchased
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching list:', error);
+      return [];
+    }
+  };
+
 
   return (
     <>
       <header className="header">
         <div className="header-content">
-          <a href="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="logo-icon">🛒</div>
-            <span>Smart Grocery Assistant</span>
-          </a>
-          <nav>
-            <ul className="nav-links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/list" style={{ textDecoration: 'underline' }}>List</a></li>
-              <li><a href="/about">About</a></li>
-            </ul>
+          <nav className="header-tabs">
+            <button 
+              className={`header-tab`}
+              onClick={() => window.location.href = '/'}
+            >
+              Home
+            </button>
+            <button 
+              className={`header-tab active`}
+            >
+              List
+            </button>
           </nav>
         </div>
       </header>
 
       <div className="container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          <div>
-            <h1>Grocery List Management</h1>
-            <p className="subtitle">Complete CRUD operations for your grocery items</p>
-          </div>
-          <div className="view-toggle">
-            <button
-              className={`btn ${viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setViewMode('table')}
-            >
-              📊 Table View
-            </button>
-            <button
-              className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setViewMode('grid')}
-            >
-              🎴 Grid View
-            </button>
-          </div>
+        <div style={{ marginBottom: '30px' }}>
+          <h1>Grocery List Management</h1>
+          <p className="subtitle">Complete CRUD operations for your grocery items</p>
         </div>
 
         <div className="stats" style={{ marginBottom: '30px' }}>
           <div className="stat-card">
+            <div className="stat-card-header">
+              <div className="stat-label">Total Items</div>
+              <div className="stat-card-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
             <div className="stat-value">{groceryList.length}</div>
-            <div className="stat-label">Total Items</div>
           </div>
           <div className="stat-card">
+            <div className="stat-card-header">
+              <div className="stat-label">Purchased</div>
+              <div className="stat-card-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
             <div className="stat-value">{groceryList.filter(i => i.isPurchased).length}</div>
-            <div className="stat-label">Purchased</div>
           </div>
           <div className="stat-card">
+            <div className="stat-card-header">
+              <div className="stat-label">Pending</div>
+              <div className="stat-card-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
             <div className="stat-value">{groceryList.filter(i => !i.isPurchased).length}</div>
-            <div className="stat-label">Pending</div>
           </div>
           <div className="stat-card">
+            <div className="stat-card-header">
+              <div className="stat-label">Expiring</div>
+              <div className="stat-card-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
             <div className="stat-value">{groceryList.filter(i => i.isExpiring).length}</div>
-            <div className="stat-label">Expiring</div>
           </div>
         </div>
 
@@ -212,20 +233,27 @@ export default function ListPage() {
         onSave={handleEditSave}
       />
 
-      <ChatBot onAddItem={async (name, category) => {
-        try {
-          const res = await fetch('/api/grocery-list', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, category })
-          });
-          if (res.ok) {
-            loadData();
+      <Assistant 
+        onAddItem={async (name, quantity, unit) => {
+          try {
+            const res = await fetch('/api/grocery-list', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, quantity, unit })
+            });
+            if (res.ok) {
+              await loadData();
+            }
+          } catch (error) {
+            console.error('Failed to add item', error);
           }
-        } catch (error) {
-          console.error('Failed to add item', error);
-        }
-      }} onGetSuggestions={() => {}} />
+        }} 
+        onGetSuggestions={() => {}}
+        onRemoveItem={handleRemoveItemByName}
+        onGetList={handleGetList}
+        onRefresh={loadData}
+        currentListCount={groceryList.length}
+      />
     </>
   );
 }

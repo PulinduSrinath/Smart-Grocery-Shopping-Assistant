@@ -1,7 +1,7 @@
 export interface GroceryItem {
   id: string;
   name: string;
-  category: string;
+  category?: string;
   quantity?: number;
   unit?: string;
   purchasedDate?: Date;
@@ -13,7 +13,8 @@ export interface GroceryItem {
 export interface PurchaseHistory {
   itemName: string;
   lastPurchased: Date;
-  frequency: number; // days between purchases
+  totalQuantity: number; // total quantity purchased
+  unit: string; // unit of measurement
   category: string;
 }
 

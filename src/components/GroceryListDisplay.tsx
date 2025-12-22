@@ -11,6 +11,15 @@ interface GroceryListDisplayProps {
   viewMode?: 'table' | 'grid';
 }
 
+// Format date as DD/MM/YYYY
+function formatDate(date: Date | string): string {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export default function GroceryListDisplay({
   items,
   onEdit,
@@ -19,22 +28,18 @@ export default function GroceryListDisplay({
   viewMode = 'table'
 }: GroceryListDisplayProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'category' | 'date'>('name');
-
-  const categories = ['all', 'dairy', 'meat', 'vegetables', 'fruits', 'bread', 'beverages', 'snacks', 'other'];
+  const [sortBy, setSortBy] = useState<'name' | 'date'>('name');
 
   // Filter and search
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
     const matchesStatus = 
       filterStatus === 'all' || 
       (filterStatus === 'purchased' && item.isPurchased) ||
       (filterStatus === 'pending' && !item.isPurchased);
     
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   // Sort
@@ -42,8 +47,6 @@ export default function GroceryListDisplay({
     switch (sortBy) {
       case 'name':
         return a.name.localeCompare(b.name);
-      case 'category':
-        return a.category.localeCompare(b.category);
       case 'date':
         const dateA = a.purchasedDate ? new Date(a.purchasedDate).getTime() : 0;
         const dateB = b.purchasedDate ? new Date(b.purchasedDate).getTime() : 0;
@@ -68,17 +71,6 @@ export default function GroceryListDisplay({
           </div>
           <div className="filter-group">
             <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="filter-select"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-            <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="filter-select"
@@ -89,11 +81,10 @@ export default function GroceryListDisplay({
             </select>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'name' | 'category' | 'date')}
+              onChange={(e) => setSortBy(e.target.value as 'name' | 'date')}
               className="filter-select"
             >
               <option value="name">Sort by Name</option>
-              <option value="category">Sort by Category</option>
               <option value="date">Sort by Date</option>
             </select>
           </div>
@@ -117,9 +108,6 @@ export default function GroceryListDisplay({
               >
                 <div className="grid-item-header">
                   <h3>{item.name}</h3>
-                  <span className={`category-badge category-${item.category}`}>
-                    {item.category}
-                  </span>
                 </div>
                 {item.quantity && (
                   <div style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#64748b' }}>
@@ -130,13 +118,13 @@ export default function GroceryListDisplay({
                   {item.purchasedDate && (
                     <div className="item-detail">
                       <span className="detail-label">Purchased:</span>
-                      <span>{new Date(item.purchasedDate).toLocaleDateString()}</span>
+                      <span>{formatDate(item.purchasedDate)}</span>
                     </div>
                   )}
                   {item.expiryDate && (
                     <div className="item-detail">
                       <span className="detail-label">Expires:</span>
-                      <span>{new Date(item.expiryDate).toLocaleDateString()}</span>
+                      <span>{formatDate(item.expiryDate)}</span>
                     </div>
                   )}
                   {item.isPurchased && (
@@ -191,17 +179,6 @@ export default function GroceryListDisplay({
         </div>
         <div className="filter-group">
           <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="filter-select"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </option>
-            ))}
-          </select>
-          <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="filter-select"
@@ -212,11 +189,10 @@ export default function GroceryListDisplay({
           </select>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'name' | 'category' | 'date')}
+            onChange={(e) => setSortBy(e.target.value as 'name' | 'date')}
             className="filter-select"
           >
             <option value="name">Sort by Name</option>
-            <option value="category">Sort by Category</option>
             <option value="date">Sort by Date</option>
           </select>
         </div>
@@ -237,7 +213,6 @@ export default function GroceryListDisplay({
             <thead>
               <tr>
                 <th>Item Name</th>
-                <th>Category</th>
                 <th>Quantity</th>
                 <th>Status</th>
                 <th>Purchased Date</th>
@@ -253,16 +228,6 @@ export default function GroceryListDisplay({
                 >
                   <td>
                     <strong>{item.name}</strong>
-                    {item.quantity && (
-                      <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>
-                        {item.quantity} {item.unit || 'pcs'}
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`category-badge category-${item.category}`}>
-                      {item.category}
-                    </span>
                   </td>
                   <td>
                     {item.quantity ? `${item.quantity} ${item.unit || 'pcs'}` : '-'}
@@ -276,19 +241,19 @@ export default function GroceryListDisplay({
                   </td>
                   <td>
                     {item.purchasedDate
-                      ? new Date(item.purchasedDate).toLocaleDateString()
+                      ? formatDate(item.purchasedDate)
                       : '-'}
                   </td>
                   <td>
                     {item.expiryDate
-                      ? new Date(item.expiryDate).toLocaleDateString()
+                      ? formatDate(item.expiryDate)
                       : '-'}
                   </td>
                   <td>
                     <div className="table-actions">
                       {!item.isPurchased && (
                         <button
-                          className="btn btn-success btn-small"
+                          className="action-btn purchase"
                           onClick={() => onMarkPurchased(item.id)}
                           title="Mark as purchased"
                         >
@@ -296,14 +261,14 @@ export default function GroceryListDisplay({
                         </button>
                       )}
                       <button
-                        className="btn btn-primary btn-small"
+                        className="action-btn edit"
                         onClick={() => onEdit(item)}
                         title="Edit"
                       >
                         ✏️
                       </button>
                       <button
-                        className="btn btn-danger btn-small"
+                        className="action-btn delete"
                         onClick={() => onDelete(item.id)}
                         title="Delete"
                       >

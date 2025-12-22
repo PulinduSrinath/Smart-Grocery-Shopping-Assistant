@@ -60,6 +60,48 @@ An AI-powered grocery list management application built with Next.js that helps 
 ### Prerequisites
 - Node.js 18+ installed
 - npm or yarn package manager
+- MySQL 8.0+ installed and running
+
+### Database Setup
+
+1. **Install MySQL** (if not already installed):
+   - Windows: Download from [MySQL Downloads](https://dev.mysql.com/downloads/mysql/)
+   - macOS: `brew install mysql` or download from MySQL website
+   - Linux: `sudo apt-get install mysql-server` (Ubuntu/Debian)
+
+2. **Start MySQL Server**:
+   ```bash
+   # Windows: Start MySQL service from Services
+   # macOS/Linux:
+   sudo systemctl start mysql
+   # or
+   mysql.server start
+   ```
+
+3. **Configure Environment Variables**:
+   
+   **Option 1: Copy the example file (Recommended)**
+   ```bash
+   # Windows (PowerShell)
+   Copy-Item .env.example .env.local
+   
+   # macOS/Linux
+   cp .env.example .env.local
+   ```
+   
+   **Option 2: Create manually**
+   Create a `.env.local` file in the root directory with:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=root
+   DB_PASSWORD=your_mysql_password
+   DB_NAME=grocery_db
+   ```
+   
+   **Important**: Edit `.env.local` and replace `your_mysql_password` (or `your_password` if using the example file) with your actual MySQL root password.
+
+4. **Database will be created automatically** when you first run the application. The tables will be initialized on first startup.
 
 ### Installation
 
@@ -74,6 +116,8 @@ npm run dev
 ```
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+**Note**: The application will automatically create the database and tables on first run. Make sure MySQL is running before starting the development server.
 
 ## Usage
 
@@ -176,12 +220,13 @@ A predefined mapping of common items to healthier alternatives with explanations
 
 - **Next.js 14**: React framework with App Router
 - **TypeScript**: Type-safe development
+- **MySQL**: Relational database for persistent storage
+- **mysql2**: MySQL client for Node.js with connection pooling
 - **CSS**: Custom styling with modern design
 - **RESTful API**: Clean API architecture with proper HTTP methods
 
 ## Future Enhancements
 
-- Database integration for persistent storage
 - User authentication and multiple lists
 - Machine learning for better predictions
 - Barcode scanning for item addition

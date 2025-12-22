@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import groceryStoreImage from './images/grocery-store.jpg'
 
 export const metadata: Metadata = {
   title: 'Smart Grocery Shopping Assistant',
@@ -16,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body style={{ backgroundImage: `url(${groceryStoreImage.src})` }}>{children}</body>
     </html>
   )
 }
