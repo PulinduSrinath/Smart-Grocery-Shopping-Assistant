@@ -13,7 +13,6 @@ interface EditItemModalProps {
 export default function EditItemModal({ item, isOpen, onClose, onSave }: EditItemModalProps) {
   const [formData, setFormData] = useState({
     name: '',
-    category: 'other',
     quantity: '',
     unit: 'pcs',
     purchasedDate: '',
@@ -22,15 +21,12 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const categories = ['dairy', 'meat', 'vegetables', 'fruits', 'bread', 'beverages', 'snacks', 'other'];
-
   const units = ['pcs', 'kg', 'g', 'L', 'mL', 'pack', 'bunch', 'bottle', 'box'];
 
   useEffect(() => {
     if (item && isOpen) {
       setFormData({
         name: item.name,
-        category: item.category,
         quantity: item.quantity?.toString() || '',
         unit: item.unit || 'pcs',
         purchasedDate: item.purchasedDate 
@@ -58,8 +54,7 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
     setLoading(true);
     try {
       const updates: Partial<GroceryItem> = {
-        name: formData.name.trim(),
-        category: formData.category
+        name: formData.name.trim()
       };
 
       if (formData.quantity) {
@@ -120,22 +115,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
               required
               placeholder="Enter item name"
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="category">Category *</label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              required
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div className="form-group-row">

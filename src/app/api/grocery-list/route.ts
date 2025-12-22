@@ -65,21 +65,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!category || typeof category !== 'string') {
-      return NextResponse.json(
-        { error: 'Category is required' },
-        { status: 400 }
-      );
-    }
-
-    const validCategories = ['dairy', 'meat', 'vegetables', 'fruits', 'bread', 'beverages', 'snacks', 'other'];
-    if (!validCategories.includes(category.toLowerCase())) {
-      return NextResponse.json(
-        { error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
     // Validate dates if provided
     let parsedPurchasedDate: Date | undefined;
     let parsedExpiryDate: Date | undefined;
@@ -106,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     const newItem = await addGroceryItem({
       name: name.trim(),
-      category: category.toLowerCase(),
+      category: category ? category.toLowerCase() : undefined,
       quantity: quantity ? parseFloat(quantity) : undefined,
       unit: unit || undefined,
       purchasedDate: parsedPurchasedDate,
@@ -188,14 +173,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (category !== undefined) {
-      const validCategories = ['dairy', 'meat', 'vegetables', 'fruits', 'bread', 'beverages', 'snacks', 'other'];
-      if (!validCategories.includes(category.toLowerCase())) {
-        return NextResponse.json(
-          { error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
-          { status: 400 }
-        );
-      }
-      updates.category = category.toLowerCase();
+      updates.category = category ? category.toLowerCase() : undefined;
     }
 
     if (quantity !== undefined) {

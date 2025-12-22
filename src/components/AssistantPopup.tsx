@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import assistantImage from '@/app/images/assistant.webp';
 
 export interface AssistantMessage {
   id: string;
@@ -81,7 +82,7 @@ export default function AssistantPopup({
         <div className="assistant-popup-content">
           <div className="assistant-image-container">
             <Image
-              src="/images/assistant.webp"
+              src={assistantImage}
               alt="Smart Assistant"
               width={80}
               height={80}

@@ -1,7 +1,7 @@
 export interface GroceryItem {
   id: string;
   name: string;
-  category: string;
+  category?: string;
   quantity?: number;
   unit?: string;
   purchasedDate?: Date;

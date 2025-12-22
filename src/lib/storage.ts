@@ -33,22 +33,76 @@ export async function updateGroceryItem(id: string, updates: Partial<GroceryItem
   return await dbUpdateGroceryItem(id, updates);
 }
 
+// Calculate expiry days based on item name
+function getExpiryDays(itemName: string, category?: string): number {
+  const nameLower = itemName.toLowerCase();
+  
+  // Item-specific expiry periods (in days)
+  const itemExpiryDays: Record<string, number> = {
+    'milk': 5,
+    'almond milk': 7,
+    'bread': 5,
+    'eggs': 21,
+    'meat': 3,
+    'chicken': 3,
+    'fish': 2,
+    'cheese': 14,
+    'yogurt': 14,
+    'rice': 365, // Uncooked rice - 1 year
+    'white rice': 365,
+    'brown rice': 180,
+    'red rice': 180,
+    'vegetables': 5,
+    'fruits': 7,
+    'tomato': 5,
+    'onion': 30,
+    'potato': 30,
+    'carrot': 14,
+    'lettuce': 5,
+    'spinach': 3,
+    'banana': 5,
+    'apple': 14,
+    'orange': 14,
+  };
+  
+  // Check for exact or partial match in item name
+  for (const [key, days] of Object.entries(itemExpiryDays)) {
+    if (nameLower.includes(key) || key.includes(nameLower)) {
+      return days;
+    }
+  }
+  
+  // Fallback to category-based expiry
+  if (category) {
+    return EXPIRY_PERIODS[category.toLowerCase()] || EXPIRY_PERIODS['other'];
+  }
+  
+  // Default expiry period
+  return EXPIRY_PERIODS['other'];
+}
+
 export async function markAsPurchased(id: string): Promise<GroceryItem | null> {
   const items = await getAllGroceryItems();
   const item = items.find(i => i.id === id);
   if (item) {
+    const purchaseDate = new Date();
+    const expiryDays = getExpiryDays(item.name, item.category);
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setDate(expiryDate.getDate() + expiryDays);
+    
     const updated = await dbUpdateGroceryItem(id, {
       isPurchased: true,
-      purchasedDate: new Date()
+      purchasedDate: purchaseDate,
+      expiryDate: expiryDate
     });
     
     if (updated) {
       // Update purchase history with proper date
       await addOrUpdatePurchaseHistory({
         itemName: item.name,
-        lastPurchased: new Date(),
-        frequency: EXPIRY_PERIODS[item.category.toLowerCase()] || 7,
-        category: item.category
+        lastPurchased: purchaseDate,
+        frequency: expiryDays,
+        category: item.category || 'other'
       });
     }
     
