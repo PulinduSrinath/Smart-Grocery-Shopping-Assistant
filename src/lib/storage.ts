@@ -97,11 +97,15 @@ export async function markAsPurchased(id: string): Promise<GroceryItem | null> {
     });
     
     if (updated) {
-      // Update purchase history with proper date
+      // Update purchase history with quantity and unit
+      const quantity = item.quantity || 1;
+      const unit = item.unit || 'pcs';
+      
       await addOrUpdatePurchaseHistory({
         itemName: item.name,
         lastPurchased: purchaseDate,
-        frequency: expiryDays,
+        totalQuantity: quantity,
+        unit: unit,
         category: item.category || 'other'
       });
     }

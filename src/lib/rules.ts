@@ -172,16 +172,19 @@ export function predictMissingItems(
       (now.getTime() - new Date(history.lastPurchased).getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    // If item is not in current list and it's time to repurchase
+    // If item is not in current list and was purchased more than 7 days ago
+    // Suggest based on purchase history (default threshold: 7 days)
     if (!currentItemNames.includes(history.itemName.toLowerCase()) && 
-        daysSinceLastPurchase >= history.frequency) {
+        daysSinceLastPurchase >= 7) {
       suggestions.push({
         type: 'missing_item',
-        message: `You bought ${history.itemName} ${daysSinceLastPurchase} days ago. Should I add it again?`,
+        message: `You bought ${history.itemName} (${history.totalQuantity} ${history.unit}) ${daysSinceLastPurchase} days ago. Should I add it again?`,
         item: {
           id: `suggested-${Date.now()}-${Math.random()}`,
           name: history.itemName,
           category: history.category,
+          quantity: history.totalQuantity,
+          unit: history.unit,
           isPurchased: false
         }
       });

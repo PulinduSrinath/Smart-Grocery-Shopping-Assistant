@@ -358,7 +358,8 @@ async function ensureDatabaseInitialized(): Promise<void> {
       CREATE TABLE IF NOT EXISTS purchase_history (
         itemName VARCHAR(255) PRIMARY KEY,
         lastPurchased DATETIME NOT NULL,
-        frequency INT NOT NULL,
+        totalQuantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        unit VARCHAR(50) NOT NULL DEFAULT 'pcs',
         category VARCHAR(100) NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -366,6 +367,63 @@ async function ensureDatabaseInitialized(): Promise<void> {
         INDEX idx_lastPurchased (lastPurchased)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    
+    // Migrate existing frequency column to totalQuantity and unit if needed
+    try {
+      // Check if totalQuantity column exists
+      const [columns] = await connection.query(`
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'purchase_history' 
+        AND COLUMN_NAME = 'totalQuantity'
+      `) as [any[], any];
+      
+      if (columns.length === 0) {
+        // Add new columns
+        await connection.query(`
+          ALTER TABLE purchase_history 
+          ADD COLUMN totalQuantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+          ADD COLUMN unit VARCHAR(50) NOT NULL DEFAULT 'pcs'
+        `);
+        
+        // Migrate existing frequency data if it exists
+        try {
+          const [hasFrequency] = await connection.query(`
+            SELECT COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'purchase_history' 
+            AND COLUMN_NAME = 'frequency'
+          `) as [any[], any];
+          
+          if (hasFrequency.length > 0) {
+            // Set default quantity for existing records
+            await connection.query(`
+              UPDATE purchase_history 
+              SET totalQuantity = 1, unit = 'pcs'
+              WHERE totalQuantity = 0
+            `);
+            
+            // Remove frequency column
+            await connection.query(`
+              ALTER TABLE purchase_history 
+              DROP COLUMN frequency
+            `);
+          }
+        } catch (error: any) {
+          // Frequency column may not exist, which is fine
+          if (error.code !== 'ER_BAD_FIELD_ERROR') {
+            console.log('Note: Could not migrate frequency column:', error.message);
+          }
+        }
+      }
+    } catch (error: any) {
+      // Ignore error if columns already exist or table doesn't exist yet
+      if (error.code !== 'ER_DUP_FIELDNAME' && error.code !== 'ER_NO_SUCH_TABLE') {
+        console.log('Note: Migration may have already been applied:', error.message);
+      }
+    }
 
     // Shop items table
     await connection.query(`
@@ -515,7 +573,8 @@ export async function getAllPurchaseHistory(): Promise<PurchaseHistory[]> {
   return rows.map(row => ({
     itemName: row.itemName,
     lastPurchased: new Date(row.lastPurchased),
-    frequency: row.frequency,
+    totalQuantity: parseFloat(row.totalQuantity) || 0,
+    unit: row.unit || 'pcs',
     category: row.category
   }));
 }
@@ -523,20 +582,56 @@ export async function getAllPurchaseHistory(): Promise<PurchaseHistory[]> {
 export async function addOrUpdatePurchaseHistory(history: PurchaseHistory): Promise<void> {
   const pool = await getPool();
   
-  await pool.query(
-    `INSERT INTO purchase_history (itemName, lastPurchased, frequency, category)
-     VALUES (?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE
-       lastPurchased = VALUES(lastPurchased),
-       frequency = VALUES(frequency),
-       category = VALUES(category)`,
-    [
-      history.itemName,
-      new Date(history.lastPurchased),
-      history.frequency,
-      history.category
-    ]
-  );
+  // Normalize unit for comparison (case-insensitive, trimmed)
+  const normalizedUnit = (history.unit || 'pcs').toLowerCase().trim();
+  const normalizedItemName = history.itemName.trim();
+  const newQuantity = parseFloat(String(history.totalQuantity)) || 0;
+  
+  // Check if record exists
+  const [existing] = await pool.query(
+    'SELECT * FROM purchase_history WHERE itemName = ?',
+    [normalizedItemName]
+  ) as [any[], any];
+  
+  if (existing.length > 0) {
+    // Update: Add to existing totalQuantity if same unit, otherwise replace
+    const existingRecord = existing[0];
+    const existingUnit = (existingRecord.unit || 'pcs').toLowerCase().trim();
+    const existingQuantity = parseFloat(existingRecord.totalQuantity) || 0;
+    
+    let newTotalQuantity = newQuantity;
+    
+    // If same unit, accumulate; otherwise replace
+    if (existingUnit === normalizedUnit) {
+      newTotalQuantity = existingQuantity + newQuantity;
+    }
+    
+    await pool.query(
+      `UPDATE purchase_history 
+       SET lastPurchased = ?, totalQuantity = ?, unit = ?, category = ?
+       WHERE itemName = ?`,
+      [
+        new Date(history.lastPurchased),
+        newTotalQuantity,
+        normalizedUnit,
+        history.category || 'other',
+        normalizedItemName
+      ]
+    );
+  } else {
+    // Insert new record
+    await pool.query(
+      `INSERT INTO purchase_history (itemName, lastPurchased, totalQuantity, unit, category)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        normalizedItemName,
+        new Date(history.lastPurchased),
+        newQuantity,
+        normalizedUnit,
+        history.category || 'other'
+      ]
+    );
+  }
 }
 
 // ==================== SHOP ITEMS ====================

@@ -14,9 +14,7 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
   const [formData, setFormData] = useState({
     name: '',
     quantity: '',
-    unit: 'pcs',
-    purchasedDate: '',
-    expiryDate: ''
+    unit: 'pcs'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,13 +26,7 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
       setFormData({
         name: item.name,
         quantity: item.quantity?.toString() || '',
-        unit: item.unit || 'pcs',
-        purchasedDate: item.purchasedDate 
-          ? new Date(item.purchasedDate).toISOString().split('T')[0]
-          : '',
-        expiryDate: item.expiryDate 
-          ? new Date(item.expiryDate).toISOString().split('T')[0]
-          : ''
+        unit: item.unit || 'pcs'
       });
       setError('');
     }
@@ -63,14 +55,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
           updates.quantity = qty;
           updates.unit = formData.unit;
         }
-      }
-
-      if (formData.purchasedDate) {
-        updates.purchasedDate = new Date(formData.purchasedDate);
-      }
-
-      if (formData.expiryDate) {
-        updates.expiryDate = new Date(formData.expiryDate);
       }
 
       await onSave(item.id, updates);
@@ -142,26 +126,6 @@ export default function EditItemModal({ item, isOpen, onClose, onSave }: EditIte
                 ))}
               </select>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="purchasedDate">Purchased Date</label>
-            <input
-              type="date"
-              id="purchasedDate"
-              value={formData.purchasedDate}
-              onChange={(e) => setFormData({ ...formData, purchasedDate: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="expiryDate">Expiry Date</label>
-            <input
-              type="date"
-              id="expiryDate"
-              value={formData.expiryDate}
-              onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-            />
           </div>
 
           <div className="modal-actions">
