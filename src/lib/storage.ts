@@ -34,12 +34,12 @@ export async function updateGroceryItem(id: string, updates: Partial<GroceryItem
 }
 
 // Calculate expiry days based on item name
-function getExpiryDays(itemName: string, category?: string): number {
+export function getExpiryDays(itemName: string, category?: string): number {
   const nameLower = itemName.toLowerCase();
   
-  // Item-specific expiry periods (in days)
+  // Item-specific expiry periods (in days) - calculated from purchase date
   const itemExpiryDays: Record<string, number> = {
-    'milk': 5,
+    'milk': 7, // Milk expires 7 days after purchase date
     'almond milk': 7,
     'bread': 5,
     'eggs': 21,
@@ -48,7 +48,7 @@ function getExpiryDays(itemName: string, category?: string): number {
     'fish': 2,
     'cheese': 14,
     'yogurt': 14,
-    'rice': 365, // Uncooked rice - 1 year
+    'rice': 365, // Rice expires 365 days after purchase date
     'white rice': 365,
     'brown rice': 180,
     'red rice': 180,
@@ -63,6 +63,11 @@ function getExpiryDays(itemName: string, category?: string): number {
     'banana': 5,
     'apple': 14,
     'orange': 14,
+    'grapes': 7,
+    'graphs': 7, // Common misspelling
+    'chocolate': 180, // Chocolate bars - 6 months
+    'sugar': 730, // Sugar - 2 years (very long shelf life)
+    'suger': 730, // Common misspelling
   };
   
   // Check for exact or partial match in item name

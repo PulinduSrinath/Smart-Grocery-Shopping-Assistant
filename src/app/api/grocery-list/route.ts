@@ -4,7 +4,8 @@ import {
   addGroceryItem, 
   removeGroceryItem, 
   updateGroceryItem,
-  initializeSampleData 
+  initializeSampleData,
+  getExpiryDays
 } from '@/lib/storage';
 import { GroceryItem } from '@/types';
 
@@ -87,7 +88,14 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    } else if (parsedPurchasedDate) {
+      // Auto-calculate expiry date ONLY if purchase date is provided
+      // Expiry date = Purchase date + expiry days (e.g., milk: purchase date + 7 days, rice: purchase date + 365 days)
+      const expiryDays = getExpiryDays(name.trim(), category ? category.toLowerCase() : undefined);
+      parsedExpiryDate = new Date(parsedPurchasedDate);
+      parsedExpiryDate.setDate(parsedExpiryDate.getDate() + expiryDays);
     }
+    // If no purchase date and no expiry date provided, expiryDate remains undefined
 
     const newItem = await addGroceryItem({
       name: name.trim(),
@@ -193,21 +201,10 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    if (purchasedDate !== undefined) {
-      if (purchasedDate === null) {
-        updates.purchasedDate = undefined;
-      } else {
-        const parsedDate = new Date(purchasedDate);
-        if (isNaN(parsedDate.getTime())) {
-          return NextResponse.json(
-            { error: 'Invalid purchased date format' },
-            { status: 400 }
-          );
-        }
-        updates.purchasedDate = parsedDate;
-      }
-    }
-
+    // Get current item for expiry calculation if needed
+    const currentList = await getGroceryList();
+    const currentItem = currentList.find(item => item.id === id);
+    
     if (expiryDate !== undefined) {
       if (expiryDate === null) {
         updates.expiryDate = undefined;
@@ -223,6 +220,32 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Handle purchase date and auto-calculate expiry if needed
+    if (purchasedDate !== undefined) {
+      if (purchasedDate === null) {
+        updates.purchasedDate = undefined;
+      } else {
+        const parsedPurchaseDate = new Date(purchasedDate);
+        if (isNaN(parsedPurchaseDate.getTime())) {
+          return NextResponse.json(
+            { error: 'Invalid purchased date format' },
+            { status: 400 }
+          );
+        }
+        updates.purchasedDate = parsedPurchaseDate;
+        
+        // Auto-calculate expiry date if not explicitly provided
+        if (expiryDate === undefined && currentItem) {
+          const itemName = updates.name || currentItem.name;
+          const itemCategory = updates.category !== undefined ? updates.category : currentItem.category;
+          const expiryDays = getExpiryDays(itemName, itemCategory);
+          const calculatedExpiryDate = new Date(parsedPurchaseDate);
+          calculatedExpiryDate.setDate(calculatedExpiryDate.getDate() + expiryDays);
+          updates.expiryDate = calculatedExpiryDate;
+        }
+      }
+    }
+
     if (isPurchased !== undefined) {
       if (typeof isPurchased !== 'boolean') {
         return NextResponse.json(
@@ -231,6 +254,36 @@ export async function PATCH(request: NextRequest) {
         );
       }
       updates.isPurchased = isPurchased;
+      
+      // If marking as purchased, set purchase date to today if not provided, and calculate expiry
+      if (isPurchased && currentItem) {
+        if (!updates.purchasedDate && !currentItem.purchasedDate) {
+          updates.purchasedDate = new Date();
+        }
+        
+        const purchaseDate = updates.purchasedDate || currentItem.purchasedDate;
+        if (purchaseDate && !updates.expiryDate) {
+          const itemName = updates.name || currentItem.name;
+          const itemCategory = updates.category !== undefined ? updates.category : currentItem.category;
+          const expiryDays = getExpiryDays(itemName, itemCategory);
+          const calculatedExpiryDate = new Date(purchaseDate);
+          calculatedExpiryDate.setDate(calculatedExpiryDate.getDate() + expiryDays);
+          updates.expiryDate = calculatedExpiryDate;
+        }
+      }
+    }
+    
+    // If name or category changes and item has purchase date, recalculate expiry
+    if ((updates.name !== undefined || updates.category !== undefined) && currentItem) {
+      const purchaseDate = updates.purchasedDate || currentItem.purchasedDate;
+      if (purchaseDate && expiryDate === undefined && !updates.expiryDate) {
+        const itemName = updates.name || currentItem.name;
+        const itemCategory = updates.category !== undefined ? updates.category : currentItem.category;
+        const expiryDays = getExpiryDays(itemName, itemCategory);
+        const calculatedExpiryDate = new Date(purchaseDate);
+        calculatedExpiryDate.setDate(calculatedExpiryDate.getDate() + expiryDays);
+        updates.expiryDate = calculatedExpiryDate;
+      }
     }
 
     const updatedItem = await updateGroceryItem(id, updates);
