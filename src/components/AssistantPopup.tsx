@@ -119,7 +119,7 @@ export default function AssistantPopup({
 
             {message.type === 'healthy' && message.suggestions && message.suggestions.length > 0 && (
               <div className="assistant-healthy-tips">
-                <p className="healthy-label">🌿 Healthier alternatives:</p>
+                <p className="healthy-label">🌿 Replace with healthier alternative:</p>
                 <div className="healthy-chips">
                   {message.suggestions.map((alt, index) => (
                     <button
@@ -127,7 +127,7 @@ export default function AssistantPopup({
                       className="healthy-chip"
                       onClick={() => onAddSuggestion && onAddSuggestion(alt)}
                     >
-                      <span>🔄</span> {alt}
+                      <span>🔄</span> Change to {alt}
                     </button>
                   ))}
                 </div>
@@ -222,7 +222,7 @@ export function generateAssistantMessage(
       id,
       type: 'healthy',
       title: 'Great choice! 🌟',
-      message: `I've added "${itemName}" to your list. Did you know there are healthier alternatives you might want to consider?`,
+      message: `I've added "${itemName}" to your list. Would you like to replace it with a healthier alternative?`,
       itemName,
       suggestions: healthyOptions,
     };

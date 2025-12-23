@@ -31,9 +31,11 @@ export default function Home() {
   const [assistantPopup, setAssistantPopup] = useState<{
     message: AssistantMessage | null;
     isVisible: boolean;
+    originalItemName?: string; // Track the original item when showing healthier alternatives
   }>({
     message: null,
-    isVisible: false
+    isVisible: false,
+    originalItemName: undefined
   });
 
 
@@ -44,15 +46,46 @@ export default function Home() {
   const showAssistantPopup = (itemName: string) => {
     const existingItems = groceryList.map(item => item.name);
     const message = generateAssistantMessage('added', itemName, existingItems, '');
-    setAssistantPopup({ message, isVisible: true });
+    // Store the original item name if it's a healthy alternatives popup
+    const originalItemName = message.type === 'healthy' ? itemName : undefined;
+    setAssistantPopup({ message, isVisible: true, originalItemName });
   };
 
   const hideAssistantPopup = () => {
-    setAssistantPopup(prev => ({ ...prev, isVisible: false }));
+    setAssistantPopup(prev => ({ ...prev, isVisible: false, originalItemName: undefined }));
   };
 
   const handleAddFromPopup = async (itemName: string) => {
+    const originalItemName = assistantPopup.originalItemName;
+    const isHealthyAlternative = assistantPopup.message?.type === 'healthy';
+    
     hideAssistantPopup();
+    
+    // If this is a healthier alternative, replace the original item
+    if (isHealthyAlternative && originalItemName) {
+      // Find and remove the original item
+      const originalItem = groceryList.find(item => 
+        item.name.toLowerCase() === originalItemName.toLowerCase()
+      );
+      
+      if (originalItem) {
+        // Remove the original item first (skip confirmation)
+        try {
+          const res = await fetch(`/api/grocery-list?id=${originalItem.id}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            // Update local state immediately
+            setGroceryList(prev => prev.filter(item => item.id !== originalItem.id));
+            updateStats(groceryList.filter(item => item.id !== originalItem.id));
+          }
+        } catch (error) {
+          console.error('Error removing original item:', error);
+        }
+      }
+    }
+    
+    // Add the new item (healthier alternative or regular suggestion)
     await addItem(itemName, 1, 'pcs');
   };
 
