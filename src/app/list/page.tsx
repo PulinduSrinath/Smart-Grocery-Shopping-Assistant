@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GroceryItem } from '@/types';
 import GroceryListDisplay from '@/components/GroceryListDisplay';
 import EditItemModal from '@/components/EditItemModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import Assistant from '@/components/Assistant';
 
 export default function ListPage() {
@@ -11,6 +12,8 @@ export default function ListPage() {
   const [loading, setLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
   useEffect(() => {
@@ -55,10 +58,12 @@ export default function ListPage() {
     const item = groceryList.find(i => i.id === id);
     if (!item) return;
 
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      return;
-    }
+    // Show delete confirmation modal
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
 
+  const performDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/grocery-list?id=${id}`, {
         method: 'DELETE'
@@ -73,6 +78,17 @@ export default function ListPage() {
     } catch (error) {
       console.error('Error removing item:', error);
     }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (itemToDelete) {
+      await performDelete(itemToDelete.id);
+    }
+  };
+
+  const handleDeleteClose = () => {
+    setIsDeleteModalOpen(false);
+    setItemToDelete(null);
   };
 
   const markPurchased = async (id: string) => {
@@ -112,14 +128,16 @@ export default function ListPage() {
   const handleRemoveItemByName = async (itemName: string) => {
     const item = groceryList.find(i => i.name.toLowerCase() === itemName.toLowerCase());
     if (item) {
-      await removeItem(item.id);
+      // Skip confirmation for assistant-initiated deletions
+      await performDelete(item.id);
     } else {
       const partialMatch = groceryList.find(i => 
         i.name.toLowerCase().includes(itemName.toLowerCase()) || 
         itemName.toLowerCase().includes(i.name.toLowerCase())
       );
       if (partialMatch) {
-        await removeItem(partialMatch.id);
+        // Skip confirmation for assistant-initiated deletions
+        await performDelete(partialMatch.id);
       }
     }
   };
@@ -231,6 +249,13 @@ export default function ListPage() {
         isOpen={isEditModalOpen}
         onClose={handleEditClose}
         onSave={handleEditSave}
+      />
+
+      <DeleteConfirmModal
+        item={itemToDelete}
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
       />
 
       <Assistant 

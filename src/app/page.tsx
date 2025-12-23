@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GroceryItem } from '@/types';
 import Assistant from '@/components/Assistant';
 import EditItemModal from '@/components/EditItemModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import AssistantPopup, { AssistantMessage, generateAssistantMessage } from '@/components/AssistantPopup';
 
 // Format date as DD/MM/YYYY
@@ -22,6 +23,8 @@ export default function Home() {
   const [stats, setStats] = useState({ total: 0, purchased: 0, pending: 0 });
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('home');
@@ -182,10 +185,18 @@ export default function Home() {
     const item = getItem(id);
     if (!item) return;
 
-    if (!skipConfirm && !confirm(`Are you sure you want to delete "${item.name}"?`)) {
+    if (!skipConfirm) {
+      // Show delete confirmation modal
+      setItemToDelete(item);
+      setIsDeleteModalOpen(true);
       return;
     }
 
+    // Actually delete the item (called from modal confirmation)
+    await performDelete(id);
+  };
+
+  const performDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/grocery-list?id=${id}`, {
         method: 'DELETE'
@@ -202,6 +213,17 @@ export default function Home() {
       console.error('Error removing item:', error);
       console.error('Failed to delete item. Please try again.');
     }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (itemToDelete) {
+      await performDelete(itemToDelete.id);
+    }
+  };
+
+  const handleDeleteClose = () => {
+    setIsDeleteModalOpen(false);
+    setItemToDelete(null);
   };
 
   const markPurchased = async (id: string) => {
@@ -562,6 +584,13 @@ export default function Home() {
         isOpen={isEditModalOpen}
         onClose={handleEditClose}
         onSave={handleEditSave}
+      />
+
+      <DeleteConfirmModal
+        item={itemToDelete}
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
       />
 
       <Assistant 
